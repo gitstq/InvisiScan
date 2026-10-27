@@ -14,14 +14,32 @@ ROOT = Path(__file__).resolve().parent.parent
 PY = sys.executable
 
 
+class _Result:
+    """subprocess result whose stdout/stderr are always str.
+
+    Communication happens in bytes so the payload can carry arbitrary Unicode
+    regardless of the parent's locale; decoding afterwards keeps every existing
+    assertion working on Windows and Linux alike.
+    """
+
+    def __init__(self, completed: subprocess.CompletedProcess) -> None:
+        self.returncode = completed.returncode
+        self.stdout = completed.stdout.decode("utf-8", errors="replace")
+        self.stderr = completed.stderr.decode("utf-8", errors="replace")
+
+
 def run_cli(*args, cwd=None, stdin=None):
-    return subprocess.run(
+    # stdin is encoded here on purpose: subprocess would otherwise use the
+    # platform preferred encoding (cp1252 on Windows), which cannot carry
+    # U+200B. The child emits UTF-8 because cli.main() forces it.
+    payload = stdin.encode("utf-8") if isinstance(stdin, str) else stdin
+    completed = subprocess.run(
         [PY, "-m", "invisiscan", *args],
         cwd=str(cwd or ROOT),
         capture_output=True,
-        text=True,
-        input=stdin,
+        input=payload,
     )
+    return _Result(completed)
 
 
 def test_version_flag():

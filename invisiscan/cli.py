@@ -18,6 +18,34 @@ EXIT_FINDINGS = 1
 EXIT_ERROR = 2
 
 
+def force_utf8_stdio() -> None:
+    """Force UTF-8 on all three standard streams.
+
+    Windows defaults stdout to cp1252 (or another legacy codepage), which
+    cannot encode the very characters this tool reports -- U+200B, Cyrillic
+    homographs, tag characters. Without this, InvisiScan dies with a
+    UnicodeEncodeError *while printing its own findings*, which ironically
+    turns every detection into a crash. Reading stdin as UTF-8 matters just as
+    much: `cat file | invisiscan --stdin` would otherwise mojibake or fail.
+
+    ``backslashreplace`` on the output streams is a belt-and-braces measure so
+    a hostile redirect can never take the scanner down mid-report.
+    """
+    for name in ("stdin", "stdout", "stderr"):
+        stream = getattr(sys, name, None)
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                if name == "stdin":
+                    reconfigure(encoding="utf-8", errors="replace")
+                else:
+                    reconfigure(encoding="utf-8", errors="backslashreplace")
+            except (ValueError, OSError, TypeError):
+                # Non-reconfigurable stream (redirected, replaced by test
+                # harness, etc.) -- nothing further we can do, so carry on.
+                pass
+
+
 class _ArgParser(argparse.ArgumentParser):
     """Keeps usage output compact without losing -h behaviour."""
 
@@ -96,6 +124,10 @@ def _valid_rule_ids(ids: Optional[Sequence[str]]) -> Set[str]:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    # Must happen before any argument parsing or scanning: argparse writes its
+    # own help/error text, which would crash first on a legacy codepage.
+    force_utf8_stdio()
+
     parser = build_parser()
     args = parser.parse_args(argv)
 

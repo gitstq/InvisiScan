@@ -85,6 +85,8 @@
 - **Python 3.9 或更高版本**（仅标准库，无其他依赖）
 - 支持 Linux / macOS / Windows
 
+> ℹ️ CI 覆盖 **Python 3.11 / 3.12 / 3.13**。代码不含 match 语句、`tomllib` 等 3.10+ 专有语法，因此在 3.9/3.10 上同样可用；但 `ubuntu-latest` 运行器（Ubuntu 26.04）已不再提供这两个版本的构建，无法在此自动验证，故不作承诺。
+
 #### 安装
 
 ```bash
@@ -361,6 +363,8 @@ ENTRYPOINT ["invisiscan"]
 
 - **Python 3.9 以上**（僅標準函式庫，無其他依賴）
 - 支援 Linux / macOS / Windows
+
+> ℹ️ CI 覆蓋 **Python 3.11 / 3.12 / 3.13**。程式碼不含 `match` 陳述式、`tomllib` 等 3.10+ 專有語法，因此在 3.9/3.10 上同樣可用；但 `ubuntu-latest` 執行器（Ubuntu 26.04）已不再提供這兩個版本的組建，無法在此自動驗證，故不作承諾。
 
 #### 安裝
 
@@ -646,6 +650,11 @@ CVE-2021-42574 / CVE-2021-42694.
 
 - **Python 3.9 or newer** (standard library only)
 - Linux / macOS / Windows
+
+> ℹ️ CI covers **Python 3.11 / 3.12 / 3.13**. The code uses no 3.10+-only syntax
+> (no `match` statements, no `tomllib`), so it runs on 3.9/3.10 too — but the
+> `ubuntu-latest` runner (Ubuntu 26.04) no longer ships those interpreters, so
+> they are outside what gets automatically verified and are not promised here.
 
 #### Install
 

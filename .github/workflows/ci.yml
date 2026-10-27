@@ -17,8 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Ubuntu 26.04 runners no longer ship Python 3.9/3.10 builds, so those
+        # versions cannot be exercised here even though the code targets 3.9+.
+        # See README "Requirements" for the supported / verified breakdown.
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
 
@@ -35,16 +38,41 @@ jobs:
         run: python -m pytest -v
 
       - name: Verify zero third-party runtime dependencies
+        # Spelled out rather than reading pyproject via tomllib, which only
+        # exists on 3.11+; this keeps the check honest on every tested version.
         shell: bash
         run: |
-          python -m pip install --quiet pipdeptree || true
-          DEPS=$(python -c "
-          import tomllib, pathlib
-          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
-          print(len(data['project']['dependencies']))
-          ")
-          echo "runtime dependencies declared: $DEPS"
-          test "$DEPS" = "0"
+          COUNT=$(python - <<'PY'
+          import pathlib, re
+          text = pathlib.Path("pyproject.toml").read_text(encoding="utf-8")
+          block = re.search(r"^dependencies\s*=\s*\[(.*?)\]", text, re.S | re.M)
+          if block is None:
+              raise SystemExit("no dependencies block found")
+          entries = [
+              line.strip().strip(",")
+              for line in block.group(1).splitlines()
+              if line.strip() and not line.strip().startswith("#")
+          ]
+          print(len(entries))
+          PY
+          )
+          echo "runtime dependencies declared: $COUNT"
+          test "$COUNT" = "0"
+
+      - name: Ensure output survives a legacy codepage
+        # Guards the Windows default cp1252 stdout, which cannot encode U+200B
+        # or Cyrillic -- without cli.force_utf8_stdio() the scanner crashes
+        # mid-report. A genuine finding also exits 1, so assert on rendered
+        # content and JSON validity rather than the exit code.
+        shell: bash
+        run: |
+          TEXT_OUT=$(PYTHONIOENCODING=cp1252 python -m invisiscan tests/fixtures/homograph.py 2>&1 || true)
+          echo "$TEXT_OUT"
+          echo "$TEXT_OUT" | grep -q "confusable-identifier" || { echo "::error::no finding rendered under cp1252"; exit 1; }
+
+          JSON_OUT=$(PYTHONIOENCODING=cp1252 python -m invisiscan tests/fixtures/homograph.py --format json 2>&1 || true)
+          echo "$JSON_OUT" | python -c "import json,sys; json.load(sys.stdin)" || { echo "::error::invalid JSON under cp1252"; exit 1; }
+          echo "survived cp1252 in both text and json modes"
 
       - name: Self scan must be clean
         run: python -m invisiscan invisiscan --format json
