@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "invisiscan"
+version = "1.0.0"
+description = "Zero-dependency Unicode safety scanner: find invisible characters, Trojan Source bidi controls and homograph identifiers."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "InvisiScan contributors" }]
+keywords = [
+    "security",
+    "unicode",
+    "trojan-source",
+    "homograph",
+    "sarif",
+    "linter",
+    "cli",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+
+[project.urls]
+Homepage = "https://github.com/invisiscan/invisiscan"
+Documentation = "https://github.com/invisiscan/invisiscan#readme"
+Repository = "https://github.com/invisiscan/invisiscan"
+Issues = "https://github.com/invisiscan/invisiscan/issues"
+
+[project.scripts]
+invisiscan = "invisiscan.cli:main"
+
+[tool.setuptools]
+packages = ["invisiscan"]
+
+[tool.setuptools.package-data]
+invisiscan = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,65 @@
+name: InvisiScan
+
+# Runs the scanner against the repository itself and publishes results
+# straight into the Security tab via SARIF. This is InvisiScan dogfooding
+# InvisiScan: a bidi control or invisible character cannot sneak into this
+# repo without a security alert firing on the pull request.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  unicode-scan:
+    name: Unicode safety scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install InvisiScan
+        run: python -m pip install --upgrade pip && python -m pip install -e .
+
+      - name: Scan repository
+        # Always write the SARIF file; only fail the job on the high-signal
+        # severity classes so the Security tab still shows everything.
+        #
+        # tests/fixtures holds deliberately hostile samples and README.md
+        # documents confusable examples, so neither is part of the clean baseline.
+        run: |
+          set +e
+          invisiscan . \
+            --format sarif \
+            --exclude .git \
+            --exclude __pycache__ \
+            --exclude tests/fixtures \
+            --exclude README.md \
+            > invisiscan.sarif
+          SCAN_RC=$?
+          echo "scan exit code: $SCAN_RC"
+          invisiscan invisiscan scripts .github --severity critical
+          echo "strict_rc=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Fail on high-severity findings
+        run: |
+          if [ "${{ env.strict_rc }}" != "0" ]; then
+            echo "::error::InvisiScan found critical Unicode hazards. See the SARIF results."
+            exit 1
+          fi
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: invisiscan.sarif
+          category: invisiscan
+        if: always()

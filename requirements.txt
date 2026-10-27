@@ -1,0 +1,2 @@
+# InvisiScan has no third-party runtime dependencies by design.
+# A pinned empty requirement keeps generic CI pipelines happy.
