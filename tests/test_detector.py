@@ -286,6 +286,23 @@ def test_text_report_reports_io_errors(tmp_path):
     assert "nope.py" in render_text([result])
 
 
+def test_emoji_presentation_selectors_are_not_flagged():
+    """U+FE0F after an emoji is ordinary presentation, not obfuscation."""
+    text = 'msg = "⚠️ error 🔍 found ✅ done 🚀"\n'
+    assert scan(text).findings == []
+
+
+def test_variation_selector_after_non_emoji_is_flagged():
+    """The same selector after an ordinary character is still suspicious."""
+    result = scan('x = "则︀"\n')
+    assert [f.rule.rule_id for f in result.findings] == ["IS006"]
+    assert result.findings[0].codepoint == 0xFE00
+
+
+def test_regional_indicator_and_symbol_singletons_exempt():
+    assert scan('flag = "\U0001F1FA\U0001F1F8 ©️ ™️"\n').findings == []
+
+
 # --------------------------------------------------------------------------
 # suppression comments
 # --------------------------------------------------------------------------

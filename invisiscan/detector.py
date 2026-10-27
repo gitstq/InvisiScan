@@ -38,6 +38,28 @@ DEFAULT_EXTENSIONS = {
 #                         `...  # invisiscan:ignore=IS002,IS010`   (named rules)
 SUPPRESSION_RE: Pattern[str] = re.compile(r"invisiscan:ignore(?:=([A-Za-z0-9,_ ]+))?")
 
+# Characters entitled to carry a presentation-form selector without suspicion.
+_EMOJI_RANGES = (
+    (0x1F300, 0x1FAFF),   # pictographs, supplemental symbols, symbols II
+    (0x1F000, 0x1F2FF),   # mahjong, dominoes, playing cards, enclosed ideographs
+    (0x2600, 0x27BF),     # misc symbols and dingbats
+    (0x2B00, 0x2BFF),     # misc symbols and arrows
+    (0x2190, 0x21FF),     # arrows
+    (0x1F1E6, 0x1F1FF),   # regional indicator symbols
+)
+_EMOJI_SINGLETONS = frozenset({0x00A9, 0x00AE, 0x203C, 0x2049, 0x2122, 0x2139, 0x2764})
+
+
+def _is_emoji_context(ch: str) -> bool:
+    """True when U+FE0F after ``ch`` is ordinary emoji presentation, not hiding anything."""
+    cp = ord(ch)
+    if cp in _EMOJI_SINGLETONS:
+        return True
+    for start, end in _EMOJI_RANGES:
+        if start <= cp <= end:
+            return True
+    return False
+
 
 @dataclass
 class Finding:
@@ -187,12 +209,20 @@ class Scanner:
             line = raw_line[:-1] if raw_line.endswith("\r") else raw_line
             line_findings: List[Finding] = []
             col = 0
+            prev = ""
             for ch in line:
                 col += 1
                 cp = ord(ch)
                 rule = RULE_FOR_CODEPOINT.get(cp)
                 if rule is not None:
                     if not self._enabled(rule):
+                        prev = ch
+                        continue
+                    # "⚠️" is how you spell "warning"; U+FE0F after an emoji is
+                    # presentation, not obfuscation. Flagging it would make the
+                    # tool useless on any modern codebase or document.
+                    if cp == 0xFE0F and prev and _is_emoji_context(prev):
+                        prev = ch
                         continue
                     line_findings.append(
                         Finding(rule=rule, line=line_no, column=col, char=ch, codepoint=cp, context=path)
@@ -208,6 +238,7 @@ class Scanner:
                             context=path,
                         )
                     )
+                prev = ch
 
             # Suppression has to be resolved independently of line_findings:
             # a line holding only a confusable pair (IS010) has no per-character
