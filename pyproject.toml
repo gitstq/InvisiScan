@@ -41,10 +41,10 @@ dependencies = []
 dev = ["pytest>=7.0", "pytest-cov>=4.0"]
 
 [project.urls]
-Homepage = "https://github.com/invisiscan/invisiscan"
-Documentation = "https://github.com/invisiscan/invisiscan#readme"
-Repository = "https://github.com/invisiscan/invisiscan"
-Issues = "https://github.com/invisiscan/invisiscan/issues"
+Homepage = "https://github.com/gitstq/InvisiScan"
+Documentation = "https://github.com/gitstq/InvisiScan#readme"
+Repository = "https://github.com/gitstq/InvisiScan"
+Issues = "https://github.com/gitstq/InvisiScan/issues"
 
 [project.scripts]
 invisiscan = "invisiscan.cli:main"

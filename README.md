@@ -6,9 +6,9 @@
 
 零依赖的 Unicode 安全扫描器 —— 揪出隐形字符、Trojan Source 双向控制符与同形异义标识符。
 
-[![CI](https://github.com/invisiscan/invisiscan/actions/workflows/ci.yml/badge.svg)](https://github.com/invisiscan/invisiscan/actions/workflows/ci.yml)
+[![CI](https://github.com/gitstq/InvisiScan/actions/workflows/ci.yml/badge.svg)](https://github.com/gitstq/InvisiScan/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
-[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](https://github.com/invisiscan/invisiscan/blob/main/pyproject.toml)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](https://github.com/gitstq/InvisiScan/blob/main/pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 **简体中文** · [繁體中文](#繁體中文) · [English](#english)
